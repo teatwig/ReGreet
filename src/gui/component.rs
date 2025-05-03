@@ -4,8 +4,12 @@
 
 //! Setup for using the greeter as a Relm4 component
 
-use std::path::PathBuf;
+use std::{
+    f64::consts::PI,
+    path::{Path, PathBuf},
+};
 
+use gtk4::gdk_pixbuf::{InterpType, Pixbuf};
 use relm4::{
     component::{AsyncComponent, AsyncComponentParts},
     gtk::prelude::*,
@@ -84,6 +88,41 @@ fn setup_users_sessions(model: &Greeter, widgets: &GreeterWidgets) {
         info!("Using first found user '{user}' as initial user");
     }
 
+    if let Some(user) = initial_username.clone() {
+        info!("Setting user icon");
+        match Pixbuf::from_file(Path::new("/var/lib/AccountsService/icons/").join(user)) {
+            Err(err) => {
+                error!("Could not load icon: {:?}", err);
+            }
+            Ok(icon) => {
+                widgets
+                    .ui
+                    .user_icon
+                    .set_draw_func(move |_, cr, area_w, area_h| {
+                        let icon_size = area_h;
+                        let pixbuf = icon
+                            .scale_simple(icon_size, icon_size, InterpType::Bilinear)
+                            .expect("could not scale icon");
+
+                        cr.set_source_pixbuf(
+                            &pixbuf,
+                            (area_w as f64 / 2.0) - (pixbuf.width() as f64 / 2.0),
+                            0.0,
+                        );
+
+                        cr.arc(
+                            area_w as f64 / 2.0,
+                            area_h as f64 / 2.0,
+                            (icon_size as f64 / 2.0) - 0.5,
+                            0.0,
+                            2.0 * PI,
+                        );
+                        cr.fill().expect("could not fill icon");
+                    });
+            }
+        };
+    }
+
     // Set the user shown initially at login.
     if !widgets
         .ui
@@ -137,6 +176,10 @@ impl AsyncComponent for Greeter {
                 session_label {
                     #[track(model.updates.changed(Updates::input_mode()))]
                     set_visible: !model.updates.is_input(),
+                },
+                #[template_child]
+                user_icon {
+                    // TODO this will not update if the user changes, but I only have one so I don't care atm
                 },
                 #[template_child]
                 usernames_box {

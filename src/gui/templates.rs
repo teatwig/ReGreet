@@ -57,6 +57,7 @@ impl WidgetTemplate for Ui {
                     /// Widget to display messages to the user
                     #[name = "message_label"]
                     attach[0, 0, 3, 1] = &gtk::Label {
+                        set_visible: false,
                         set_margin_bottom: 15,
 
                         // Format all messages in boldface.
@@ -68,6 +69,12 @@ impl WidgetTemplate for Ui {
                                 gtk::pango::AttrFontDesc::new(&font_desc)
                             },
                         },
+                    },
+
+                    /// Widget containing the icon of the user
+                    #[name = "user_icon"]
+                    attach[0, 0, 3, 1] = &gtk::DrawingArea {
+                        set_height_request: 150,
                     },
 
                     #[template]
